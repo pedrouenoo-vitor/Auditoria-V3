@@ -1,0 +1,36 @@
+const LIMIT_PPM = 20000;
+const SAMPLE_DATA = [
+  {data:"2026-09-15",linha:"L1",produto:"Ventilador 40cm",defeito:"Ruído",produzido:500,rejeitado:8},
+  {data:"2026-09-15",linha:"L2",produto:"Ventilador 50cm",defeito:"Vibração",produzido:420,rejeitado:12},
+  {data:"2026-09-16",linha:"L1",produto:"Ventilador 40cm",defeito:"Grade quebrada",produzido:510,rejeitado:5},
+  {data:"2026-09-16",linha:"L2",produto:"Ventilador 50cm",defeito:"Ruído",produzido:450,rejeitado:9},
+  {data:"2026-09-17",linha:"L1",produto:"Ventilador 40cm",defeito:"Vibração",produzido:490,rejeitado:11}
+];
+let sourceData=[...SAMPLE_DATA], filteredData=[];
+const $=id=>document.getElementById(id);
+const number=new Intl.NumberFormat("pt-BR",{maximumFractionDigits:0});
+const decimal=new Intl.NumberFormat("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const ppm=(r,p)=>p ? r/p*1_000_000 : 0;
+const escapeHtml=v=>String(v).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+
+function parseCSV(text){
+  const rows=[]; let row=[],cell="",quoted=false;
+  for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'&&quoted&&n==='"'){cell+='"';i++;}else if(c==='"'){quoted=!quoted;}else if(c===','&&!quoted){row.push(cell);cell="";}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&n==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell="";}else cell+=c;}
+  row.push(cell);if(row.some(x=>x.trim()))rows.push(row);if(!rows.length)throw new Error("O arquivo está vazio.");
+  const headers=rows.shift().map(h=>h.replace(/^\uFEFF/,"").trim().toLowerCase());
+  const required=["data","linha","produto","defeito","produzido","rejeitado"];
+  const missing=required.filter(h=>!headers.includes(h));if(missing.length)throw new Error(`Colunas ausentes: ${missing.join(", ")}`);
+  return rows.map((values,index)=>{const item=Object.fromEntries(headers.map((h,i)=>[h,(values[i]??"").trim()]));item.produzido=Number(item.produzido);item.rejeitado=Number(item.rejeitado);if(!/^\d{4}-\d{2}-\d{2}$/.test(item.data)||!Number.isFinite(item.produzido)||!Number.isFinite(item.rejeitado)||item.produzido<0||item.rejeitado<0||item.rejeitado>item.produzido)throw new Error(`Dados inválidos na linha ${index+2}.`);return item;});
+}
+function setOptions(id,values){const el=$(id);el.innerHTML=values.map(v=>`<option selected value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");}
+function selected(id){return [...$(id).selectedOptions].map(o=>o.value);}
+function setupFilters(){const lines=[...new Set(sourceData.map(x=>x.linha))].sort(),products=[...new Set(sourceData.map(x=>x.produto))].sort(),dates=sourceData.map(x=>x.data).sort();setOptions("lineFilter",lines);setOptions("productFilter",products);$("startDate").value=dates[0]||"";$("endDate").value=dates.at(-1)||"";applyFilters();}
+function applyFilters(){const lines=selected("lineFilter"),products=selected("productFilter"),start=$("startDate").value,end=$("endDate").value;filteredData=sourceData.filter(x=>lines.includes(x.linha)&&products.includes(x.produto)&&(!start||x.data>=start)&&(!end||x.data<=end));render();}
+function showMessage(text,type){const el=$("message");el.textContent=text;el.className=`message ${type}`;}
+function render(){const produced=filteredData.reduce((s,x)=>s+x.produzido,0),rejected=filteredData.reduce((s,x)=>s+x.rejeitado,0),value=ppm(rejected,produced),rate=produced?rejected/produced*100:0;$("producedKpi").textContent=number.format(produced);$("rejectedKpi").textContent=number.format(rejected);$("ppmKpi").textContent=number.format(value);$("rateKpi").textContent=`${decimal.format(rate)}%`;showMessage(filteredData.length?(value>LIMIT_PPM?`⚠ PPM crítico: ${number.format(value)}. Limite: ${number.format(LIMIT_PPM)}.`:`✓ PPM sob controle: ${number.format(value)}.`):"Nenhum registro encontrado para os filtros.",filteredData.length&&value<=LIMIT_PPM?"success":"error");renderPareto();renderTrend();renderTable();}
+function renderPareto(){const totals={};filteredData.forEach(x=>totals[x.defeito]=(totals[x.defeito]||0)+x.rejeitado);const items=Object.entries(totals).sort((a,b)=>b[1]-a[1]),max=Math.max(...items.map(x=>x[1]),1);$("paretoChart").innerHTML=items.length?items.map(([name,value])=>`<div class="bar-row"><span title="${escapeHtml(name)}">${escapeHtml(name)}</span><div class="bar-track"><div class="bar-fill" style="width:${value/max*100}%"></div></div><b>${number.format(value)}</b></div>`).join(""):'<div class="empty">Sem dados para exibir</div>';}
+function renderTrend(){const totals={};filteredData.forEach(x=>{totals[x.data]??={produzido:0,rejeitado:0};totals[x.data].produzido+=x.produzido;totals[x.data].rejeitado+=x.rejeitado});const items=Object.entries(totals).sort().map(([date,v])=>({date,value:ppm(v.rejeitado,v.produzido)}));if(!items.length){$("trendChart").innerHTML='<div class="empty">Sem dados para exibir</div>';return;}const w=600,h=230,pad=38,max=Math.max(LIMIT_PPM,...items.map(x=>x.value))*1.15,x=i=>items.length===1?w/2:pad+i*(w-2*pad)/(items.length-1),y=v=>h-pad-v*(h-2*pad)/max,points=items.map((d,i)=>`${x(i)},${y(d.value)}`).join(" "),limitY=y(LIMIT_PPM);$("trendChart").innerHTML=`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Tendência diária de PPM"><line x1="${pad}" y1="${limitY}" x2="${w-pad}" y2="${limitY}" stroke="#e45756" stroke-dasharray="6 5"/><text x="${w-pad}" y="${limitY-6}" text-anchor="end" class="trend-label">Limite 20.000</text><polyline points="${points}" fill="none" stroke="#176b87" stroke-width="4" stroke-linejoin="round"/>${items.map((d,i)=>`<circle cx="${x(i)}" cy="${y(d.value)}" r="5" fill="#27a9c2"><title>${d.date}: ${number.format(d.value)} PPM</title></circle><text x="${x(i)}" y="${h-12}" text-anchor="middle" class="trend-label">${d.date.slice(5).split('-').reverse().join('/')}</text>`).join("")}</svg>`;}
+function renderTable(){$("recordCount").textContent=`${filteredData.length} registro${filteredData.length===1?'':'s'}`;$("dataBody").innerHTML=filteredData.map(x=>`<tr><td>${x.data.split('-').reverse().join('/')}</td><td>${escapeHtml(x.linha)}</td><td>${escapeHtml(x.produto)}</td><td>${escapeHtml(x.defeito)}</td><td>${number.format(x.produzido)}</td><td>${number.format(x.rejeitado)}</td><td>${number.format(ppm(x.rejeitado,x.produzido))}</td></tr>`).join("");}
+function downloadCSV(){const headers=["data","linha","produto","defeito","produzido","rejeitado","ppm"],quote=v=>`"${String(v).replaceAll('"','""')}"`,rows=filteredData.map(x=>[x.data,x.linha,x.produto,x.defeito,x.produzido,x.rejeitado,Math.round(ppm(x.rejeitado,x.produzido))]);const blob=new Blob(["\uFEFF"+[headers,...rows].map(r=>r.map(quote).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="controle_qualidade_filtrado.csv";a.click();URL.revokeObjectURL(a.href);}
+$("fileInput").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;try{sourceData=parseCSV(await file.text());setupFilters();}catch(error){showMessage(error.message,"error");}});$("resetData").addEventListener("click",()=>{sourceData=[...SAMPLE_DATA];$("fileInput").value="";setupFilters();});$("applyFilters").addEventListener("click",applyFilters);$("downloadCsv").addEventListener("click",downloadCSV);setupFilters();
+

@@ -1,0 +1,7 @@
+data,linha,produto,defeito,produzido,rejeitado
+2026-09-15,L1,Ventilador 40cm,Ruído,500,8
+2026-09-15,L2,Ventilador 50cm,Vibração,420,12
+2026-09-16,L1,Ventilador 40cm,Grade quebrada,510,5
+2026-09-16,L2,Ventilador 50cm,Ruído,450,9
+2026-09-17,L1,Ventilador 40cm,Vibração,490,11
+
