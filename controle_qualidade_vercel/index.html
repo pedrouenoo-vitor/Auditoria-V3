@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Dashboard industrial de controle da qualidade" />
+    <title>QM | Controle da Qualidade</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">QM</span><div><b>Quality Monitor</b><small>Industrial Analytics</small></div></div>
+        <section>
+          <h2>Filtros e dados</h2>
+          <label class="upload" for="fileInput"><span>Carregar CSV</span><small>Escolher arquivo do computador</small></label>
+          <input id="fileInput" type="file" accept=".csv,text/csv" hidden />
+          <button id="resetData" class="ghost">Restaurar dados de exemplo</button>
+        </section>
+        <section class="filters">
+          <label>Linha<select id="lineFilter" multiple></select></label>
+          <label>Produto<select id="productFilter" multiple></select></label>
+          <div class="date-grid">
+            <label>Data inicial<input id="startDate" type="date" /></label>
+            <label>Data final<input id="endDate" type="date" /></label>
+          </div>
+          <button id="applyFilters" class="primary">Aplicar filtros</button>
+        </section>
+        <div class="limit"><small>CRITÉRIO DE ALERTA</small><strong>PPM acima de 20.000</strong></div>
+      </aside>
+
+      <main>
+        <header class="hero">
+          <div><span class="eyebrow">PAINEL EXECUTIVO</span><h1>Controle da Qualidade</h1><p>Monitoramento de produção, rejeição, PPM e principais defeitos</p></div>
+          <div class="status-dot"><i></i> Dados atualizados</div>
+        </header>
+
+        <div id="message" class="message hidden"></div>
+
+        <section class="metrics">
+          <article><span>Total produzido</span><strong id="producedKpi">0</strong><small>peças no período</small></article>
+          <article><span>Total rejeitado</span><strong id="rejectedKpi">0</strong><small>peças não conformes</small></article>
+          <article><span>PPM</span><strong id="ppmKpi">0</strong><small>partes por milhão</small></article>
+          <article><span>Taxa de rejeição</span><strong id="rateKpi">0%</strong><small>rejeitado ÷ produzido</small></article>
+        </section>
+
+        <section class="charts">
+          <article class="panel"><div class="panel-title"><div><h2>Pareto de rejeitados</h2><p>Quantidade por tipo de defeito</p></div></div><div id="paretoChart" class="bar-chart"></div></article>
+          <article class="panel"><div class="panel-title"><div><h2>Tendência diária de PPM</h2><p>Evolução e limite de controle</p></div></div><div id="trendChart" class="trend-chart"></div></article>
+        </section>
+
+        <section class="panel table-panel">
+          <div class="panel-title table-heading"><div><h2>Dados detalhados</h2><p id="recordCount">0 registros</p></div><button id="downloadCsv" class="secondary">Baixar CSV filtrado</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Data</th><th>Linha</th><th>Produto</th><th>Defeito</th><th>Produzido</th><th>Rejeitado</th><th>PPM</th></tr></thead><tbody id="dataBody"></tbody></table></div>
+        </section>
+      </main>
+    </div>
+    <script src="app.js" defer></script>
+  </body>
+</html>
+

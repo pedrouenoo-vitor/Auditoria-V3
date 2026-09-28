@@ -9,6 +9,7 @@ Versão estática do dashboard industrial, convertida do Streamlit para HTML, CS
 - KPIs de produção, rejeição, PPM e taxa;
 - Alerta acima de 20.000 PPM;
 - Pareto de defeitos e tendência diária;
+- Gráficos interativos com Chart.js e percentual acumulado do Pareto;
 - Tabela e exportação do resultado filtrado;
 - Layout responsivo para computador e celular.
 
@@ -42,4 +43,3 @@ git push -u origin main
 7. Clique em **Deploy**.
 
 O processamento do CSV ocorre apenas no navegador. Nenhum dado enviado pelo usuário é armazenado em servidor.
-

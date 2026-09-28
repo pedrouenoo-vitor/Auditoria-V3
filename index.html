@@ -41,15 +41,15 @@
         <div id="message" class="message hidden"></div>
 
         <section class="metrics">
-          <article><span>Total produzido</span><strong id="producedKpi">0</strong><small>peças no período</small></article>
-          <article><span>Total rejeitado</span><strong id="rejectedKpi">0</strong><small>peças não conformes</small></article>
-          <article><span>PPM</span><strong id="ppmKpi">0</strong><small>partes por milhão</small></article>
-          <article><span>Taxa de rejeição</span><strong id="rateKpi">0%</strong><small>rejeitado ÷ produzido</small></article>
+          <article><div class="metric-top"><span>Total produzido</span><i class="metric-icon blue">▦</i></div><strong id="producedKpi">0</strong><small>peças no período</small></article>
+          <article><div class="metric-top"><span>Total rejeitado</span><i class="metric-icon red">!</i></div><strong id="rejectedKpi">0</strong><small>peças não conformes</small></article>
+          <article><div class="metric-top"><span>PPM</span><i class="metric-icon amber">◆</i></div><strong id="ppmKpi">0</strong><small>partes por milhão</small></article>
+          <article><div class="metric-top"><span>Taxa de rejeição</span><i class="metric-icon green">%</i></div><strong id="rateKpi">0%</strong><small>rejeitado ÷ produzido</small></article>
         </section>
 
         <section class="charts">
-          <article class="panel"><div class="panel-title"><div><h2>Pareto de rejeitados</h2><p>Quantidade por tipo de defeito</p></div></div><div id="paretoChart" class="bar-chart"></div></article>
-          <article class="panel"><div class="panel-title"><div><h2>Tendência diária de PPM</h2><p>Evolução e limite de controle</p></div></div><div id="trendChart" class="trend-chart"></div></article>
+          <article class="panel"><div class="panel-title"><div><h2>Pareto de rejeitados</h2><p>Barras por defeito e percentual acumulado</p></div><span class="chart-badge">PARETO</span></div><div class="canvas-wrap"><canvas id="paretoChart"></canvas></div></article>
+          <article class="panel"><div class="panel-title"><div><h2>Tendência diária de PPM</h2><p>Evolução e limite de controle</p></div><span class="chart-badge">TENDÊNCIA</span></div><div class="canvas-wrap"><canvas id="trendChart"></canvas></div></article>
         </section>
 
         <section class="panel table-panel">
@@ -58,7 +58,7 @@
         </section>
       </main>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="app.js" defer></script>
   </body>
 </html>
-
